@@ -1,5 +1,6 @@
 mod english;
 mod shingle;
+mod search;
 
 pub type Pos = (usize, usize);
 
@@ -11,6 +12,13 @@ pub struct Unit {
 }
 
 pub type Text = Vec<Unit>;
+
+pub struct Detection {
+    pub matches: Vec<(Unit, Unit)>,
+    pub score: usize,
+    pub text1_pos: Pos,
+    pub text2_pos: Pos,
+}
 
 pub fn find_matches(a: Text, b: Text) -> Vec<(Unit, Unit)> {
     let matches = a.iter()
@@ -59,6 +67,28 @@ pub fn score_cluster(cluster: &Vec<(Unit, Unit)>) -> usize {
     return (cluster.len() * cluster.len() * 1024) / spread
 }
 
+pub fn evaluate_clusters(clusters: &Vec<Vec<(Unit, Unit)>>) -> Vec<Detection> {
+    return clusters.iter()
+        .map(score_cluster)
+        .zip(clusters)
+        .map(|(score, cluster)| Detection{
+            matches: cluster.clone(), 
+            score,
+            text1_pos: (
+                cluster.iter().map(|m| m.0.position.0).min().unwrap(),
+                cluster.iter().map(|m| m.0.position.1).max().unwrap(),
+            ),
+            text2_pos: (
+                cluster.iter().map(|m| m.1.position.0).min().unwrap(),
+                cluster.iter().map(|m| m.1.position.1).max().unwrap(),
+            ),
+        })
+        .collect();
+}
+
+pub fn detect(text1: Text, text2: Text, max_distance: i32) -> Vec<Detection> {
+    return evaluate_clusters(&cluster(find_matches(text1, text2), max_distance))
+}
 
 #[cfg(test)]
 mod tests {
@@ -114,5 +144,18 @@ mod tests {
         let scores: Vec<usize> = clusters.iter().map(score_cluster).collect();
         assert!(scores.get(0).unwrap() > scores.get(1).unwrap());
         assert!(scores.get(1).unwrap() > scores.get(2).unwrap());
+    }
+
+    #[test]
+    fn test_evaluate() {
+        let text1 = split_words("1 2 c d e f 3 4 5 6 p q 7 r s 8 9 10 11 a b c");
+        let text2 = split_words("a b c d e f g h i j k l m n o p q r s");
+        let matches = find_matches(text1, text2);
+        let clusters = cluster(matches, 5); // "c d e f" > "p q 7 r s" > "a b c"
+        let detections = evaluate_clusters(&clusters);
+
+        assert_eq!(detections.get(0).unwrap().text1_pos, (4, 12));
+        assert!(detections.get(0).unwrap().score > detections.get(1).unwrap().score);
+        assert!(detections.get(1).unwrap().score > detections.get(2).unwrap().score);
     }
 }

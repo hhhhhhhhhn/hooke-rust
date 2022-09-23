@@ -12,3 +12,8 @@ path="src/lib.rs"
 rust-stemmers="*"
 stop-words="*"
 regex="*"
+search_with_google="*"
+websearch={git="https://github.com/hhhhhhhhhn/websearch"}
+tokio={version="*", features=["macros"]}
+reqwest="*"
+futures-util="*"
