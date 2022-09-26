@@ -2,9 +2,11 @@ mod english;
 mod shingle;
 mod search;
 
+use serde::{Serialize, Deserialize};
+
 pub type Pos = (usize, usize);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Unit {
     pub value: String,
     pub position: Pos,
@@ -13,6 +15,7 @@ pub struct Unit {
 
 pub type Text = Vec<Unit>;
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Detection {
     pub matches: Vec<(Unit, Unit)>,
     pub score: usize,

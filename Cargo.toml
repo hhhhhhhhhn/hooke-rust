@@ -17,3 +17,4 @@ websearch={git="https://github.com/hhhhhhhhhn/websearch"}
 tokio={version="*", features=["macros"]}
 reqwest="*"
 futures-util="*"
+serde={ version="*", features=["derive"]}
