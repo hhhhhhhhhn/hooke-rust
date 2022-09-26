@@ -1,6 +1,6 @@
-mod english;
-mod shingle;
-mod search;
+pub mod english;
+pub mod shingle;
+pub mod search;
 
 use serde::{Serialize, Deserialize};
 
