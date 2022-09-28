@@ -67,6 +67,9 @@ pub fn score_cluster(cluster: &Vec<(Unit, Unit)>) -> usize {
 
     let spread = text1_end - text1_start + text2_end - text2_start;
 
+    if spread == 0 {
+        return 0
+    }
     return (cluster.len() * cluster.len() * 1024) / spread
 }
 
