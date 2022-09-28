@@ -23,7 +23,7 @@ pub struct Detection {
     pub text2_pos: Pos,
 }
 
-pub fn find_matches(a: Text, b: Text) -> Vec<(Unit, Unit)> {
+pub fn find_matches(a: &Text, b: &Text) -> Vec<(Unit, Unit)> {
     let matches = a.iter()
         .flat_map(|text_a|
             b.iter()
@@ -89,7 +89,7 @@ pub fn evaluate_clusters(clusters: &Vec<Vec<(Unit, Unit)>>) -> Vec<Detection> {
         .collect();
 }
 
-pub fn detect(text1: Text, text2: Text, max_distance: i32) -> Vec<Detection> {
+pub fn detect(text1: &Text, text2: &Text, max_distance: i32) -> Vec<Detection> {
     return evaluate_clusters(&cluster(find_matches(text1, text2), max_distance))
 }
 
@@ -118,7 +118,7 @@ mod tests {
     fn test_find_matches() {
         let text1 = split_words("some words I know");
         let text2 = split_words("you know as well as I");
-        let matches = find_matches(text1, text2);
+        let matches = find_matches(&text1, &text2);
         assert_eq!(matches.len(), 2);
         assert!(matches.iter().all(|(x, y)| x.value == y.value));
         assert_eq!(matches.get(0).unwrap().0.value, "I");
@@ -129,7 +129,7 @@ mod tests {
     fn test_cluster() {
         let text1 = split_words("a b c d e f g h i j k l m n o p q r s");
         let text2 = split_words("1 2 c d e f 3 4 5 6 p q 7 r s 8 9 10");
-        let matches = find_matches(text1, text2);
+        let matches = find_matches(&text1, &text2);
         let clusters = cluster(matches, 5);
         assert_eq!(clusters.len(), 2);
         assert_eq!(clusters.get(0).unwrap().iter().map(|(x, _)| x.value.clone()).collect::<Vec<String>>(),
@@ -142,7 +142,7 @@ mod tests {
     fn test_score() {
         let text1 = split_words("1 2 c d e f 3 4 5 6 p q 7 r s 8 9 10 11 a b c");
         let text2 = split_words("a b c d e f g h i j k l m n o p q r s");
-        let matches = find_matches(text1, text2);
+        let matches = find_matches(&text1, &text2);
         let clusters = cluster(matches, 5); // "c d e f" > "p q 7 r s" > "a b c"
         let scores: Vec<usize> = clusters.iter().map(score_cluster).collect();
         assert!(scores.get(0).unwrap() > scores.get(1).unwrap());
@@ -153,7 +153,7 @@ mod tests {
     fn test_evaluate() {
         let text1 = split_words("1 2 c d e f 3 4 5 6 p q 7 r s 8 9 10 11 a b c");
         let text2 = split_words("a b c d e f g h i j k l m n o p q r s");
-        let matches = find_matches(text1, text2);
+        let matches = find_matches(&text1, &text2);
         let clusters = cluster(matches, 5); // "c d e f" > "p q 7 r s" > "a b c"
         let detections = evaluate_clusters(&clusters);
 
