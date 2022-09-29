@@ -2,6 +2,7 @@ use crate::Text;
 use websearch;
 use regex::Regex;
 use reqwest;
+use tokio;
 
 pub fn get_queries(text: Text) -> Vec<String>  {
     let words: Vec<&str> = text.iter().map(|unit| unit.value.as_str()).collect();
@@ -29,21 +30,36 @@ pub async fn search_similar_texts(text: Text) -> Vec<(String, String)> {
             }
         }
     }
-    let mut texts = Vec::new();
-    for url in urls {
-        match reqwest::get(&url).await {
-            Ok(request) => {
-                match request.text().await {
-                    Ok(text) => {
-                        texts.push((url, extract_text(text)))
+    let texts = download_texts(&urls).await;
+    return urls.iter().map(|x| x.clone()).zip(texts).collect();
+}
+
+async fn download_texts(urls: &Vec<String>) -> Vec<String> {
+    let tasks = urls.iter().map(|x| x.clone())
+        .map(|url| {
+            tokio::spawn(async move {
+                match reqwest::get(&url).await {
+                    Ok(request) => {
+                        match request.text().await {
+                            Ok(text) => {
+                                Some(extract_text(text))
+                            }
+                            Err(_) => None
+                        }
                     }
-                    Err(_) => ()
+                    Err(_) => None
                 }
-            }
-            Err(_) => ()
+            })
+        });
+    
+    let mut texts = Vec::new();
+    for task in tasks {
+        match task.await {
+            Ok(Some(text)) => texts.push(text),
+            _ => texts.push("".to_string()),
         }
     }
-    return texts;
+    return texts
 }
 
 #[cfg(test)]
